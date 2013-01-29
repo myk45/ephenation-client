@@ -318,6 +318,50 @@ static bool MostlyFacingUpwards(const VertexDataf &v) {
 
 #define MAX_SUN_INTENSITY 	230		// 0-255. Don't saturate, to allow a small contribution from ambient light
 
+#define DEBUG_FILE
+#ifdef DEBUG_FILE
+std::vector<glm::vec3> cc_cord;
+std::vector<glm::vec3> cbc_cord;
+
+void readFromFile()
+{
+    FILE* fp = fopen("DEBUG_FILE.txt", "r");
+    int cb_x, cb_y, cb_z;
+    int cbc_x, cbc_y, cbc_z;
+
+    if (!fp)
+        return;
+
+    while ( !feof(fp) ) {
+        fscanf(fp, "\nCB: %d %d %d",  &cb_x, &cb_y, &cb_z);
+        fscanf(fp, "\nCBC: %d %d %d", &cbc_x, &cbc_y, &cbc_z);
+
+        cc_cord.push_back(glm::vec3(cb_x, cb_y, cb_z));
+        cbc_cord.push_back(glm::vec3(cbc_x, cbc_y, cbc_z));
+    }
+
+
+    fclose(fp);
+}
+
+bool Chunk_Block_Present(glm::vec3 cc_coord, glm::vec3 cbc_coord)
+{
+    for (int i = 0; i < cc_cord.size(); i++) {
+         if (
+            cbc_coord.x == cbc_cord[i].x && cbc_coord.y == cbc_cord[i].y && cbc_coord.z == cbc_cord[i].z &&
+            cc_coord.x == cc_cord[i].x   && cc_coord.y == cc_cord[i].y &&cc_coord.z == cc_cord[i].z
+           )
+         {
+            return true;
+         }
+    }
+
+    return false;
+
+}
+int controlVar = 0;
+#endif
+
 // Create an array of struct TriangleSurfacef for each block type. The arguments are used for picking mode.
 // The reason that the chunk pointer is a const is that nothing is allowed be changed in it. This is because this update function
 // is done in a separate process.
@@ -355,6 +399,18 @@ void ChunkObject::FindTriangles(const Chunk *cp, bool pickingMode, int pdx, int 
 				// NOTICE: in the game server, 'z' is the height, but in OpenGL, 'y' is the height. Because of that,
 				// 'z' and 'y' are changed with each other when creating OpenGL graphics from server coordinates.
 				int bl = cp->GetBlock(x, y, z);
+#ifdef DEBUG_FILE
+                // A file open/close everytime! but its ok, just for debug.
+                // This block is part of the UserBlock!
+				if ( Chunk_Block_Present(glm::vec3(cp->cc.x, cp->cc.y, cp->cc.z),
+                                         glm::vec3(x, y, z))
+                                        )
+                {
+                    printf("\nuser-block!");
+                    continue;
+                }
+#endif
+
 				if (cp->fChunkBlocks->blockIsComplTransp(bl))
 					continue;	// Nothing is drawn from air
 

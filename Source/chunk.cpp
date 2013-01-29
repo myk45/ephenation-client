@@ -441,6 +441,26 @@ void Chunk::DrawObjects(StageOneShader *shader, int dx, int dy, int dz, bool for
 		}
 	}
 
+	// =================================================================================
+	static double var = 0.0;
+	if (gUserObjects.size()) {
+	    std::vector<UserBlock*> userBlockList = gUserObjects[0]->mGetUserBlockList();
+        for (int i=0; i< userBlockList.size(); i++) {
+            float lampx = (float)userBlockList[i]->fBlockCoord.x + dx*CHUNK_SIZE + 0.5f;
+            float lampy = (float)userBlockList[i]->fBlockCoord.z + dz*CHUNK_SIZE;
+            float lampz = -(float)userBlockList[i]->fBlockCoord.y - dy*CHUNK_SIZE - 0.5f;
+            //gDrawObjectList.emplace_back(glm::vec3(lampx, lampy, lampz), fChunkObject->fLampList[i].type);
+            glm::mat4 modelMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(lampx, lampy, lampz));
+            glBindTexture(GL_TEXTURE_2D, GameTexture::LanternSideId); // For now, also used on top and bottom.
+            modelMatrix = glm::scale(modelMatrix, glm::vec3(sin(var), sin(var), sin(var)));
+            modelMatrix = glm::translate(modelMatrix, glm::vec3(sin(var), sin(var), sin(var)));
+            shader->Model(modelMatrix);
+            gLantern.Draw();
+        }
+	}
+	var += 0.002;
+	// =================================================================================
+
 	// Draw all lamps
 	for (int i=0; i<fChunkObject->fNumLamps; i++) {
 		float lampx = (float)fChunkObject->fLampList[i].x + dx*CHUNK_SIZE + 0.5f;

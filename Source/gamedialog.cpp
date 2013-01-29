@@ -28,6 +28,9 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <limits>
 
+// Mukund: mimicking server!
+#define DEBUG_FILE
+
 #ifndef M_PI
 #define M_PI		3.14159265358979323846
 #endif
@@ -491,6 +494,10 @@ static void handleKeypress(int key, int action) {
 
 string prevCommand;
 
+#ifdef DEBUG_FILE
+FILE *debug_file = NULL;
+#endif
+
 void gameDialog::HandleKeyPress(int key) {
 	if (key == GLFW_KEY_F12) {
 		// Special override, whether activating input to a Rocket context or not.
@@ -708,6 +715,44 @@ void gameDialog::HandleKeyPress(int key) {
 	case 'V': // Closer to B when building
 		if (gMode.Get() == GameMode::CONSTRUCT) {
 			ClickOnBlock(x, y);
+		}
+		break;
+    case '[': // Closer to B when building
+        {
+            extern int controlVar;
+            extern std::vector<UserObject*> gUserObjects;
+
+            // Mukund: can we use a factory for simplifying the following?
+            ChunkOffsetCoord coc;
+            chunk *cp = this->FindSelectedSurface(x, y, &coc, 0);
+            printf("DEBUG_STUFF %d %d %d\n", cp->cc.x, cp->cc.x, cp->cc.x);
+
+            UserObject *userObj = UserObject::msMakeUserObject(glm::vec3(coc.x, coc.y, coc.z),
+                                                               glm::vec3(cp->cc.x, cp->cc.x, cp->cc.x));
+
+#ifdef DEBUG_FILE
+            debug_file = fopen("DEBUG_FILE.txt", "a+");
+            if (debug_file) {
+                fprintf(debug_file, "\nCB: %d %d %d", cp->cc.x, cp->cc.y, cp->cc.z);
+                fprintf(debug_file, "\nCBC: %d %d %d", coc.x, coc.y, coc.z);
+                controlVar = 1;
+                fclose(debug_file);
+            } else {
+                printf("error!");
+            }
+#endif
+            static int i = 0;
+            if (i++) {
+                gUserObjects[0]->mAttachObject(userObj);
+            } else {
+                gUserObjects.push_back(userObj);
+            }
+		}
+		break;
+    case ']': // Closer to B when building
+        {
+            extern std::vector<UserObject*> gUserObjects;
+            gUserObjects[0]->mAnimateObject();
 		}
 		break;
 	case GLFW_KEY_KP_SUBTRACT:
